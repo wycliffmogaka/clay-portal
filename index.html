@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clay Intl Sec - Complete Management System</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --secondary: #f3f4f6;
+      --accent: #16a34a;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --dark: #1f2937;
+      --light-blue: #0284c7;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--secondary);
+      margin: 0;
+      padding: 0;
+    }
+
+    /* LOGIN SCREEN */
+    #loginScreen {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1e3a8a, #0f172a);
+    }
+
+    .login-card {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+
+    .login-card h2 { margin-bottom: 5px; color: var(--primary); }
+    .login-card p.subtitle { color: #666; font-size: 14px; margin-bottom: 25px; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .form-group label { margin-bottom: 5px; font-size: 13px; font-weight: bold; color: var(--dark); }
+    .form-group input, .form-group select {
+      padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;
+    }
+
+    .btn-login {
+      width: 100%; background-color: var(--primary); color: white;
+      padding: 12px; border: none; border-radius: 6px; font-size: 16px;
+      font-weight: bold; cursor: pointer; margin-top: 10px;
+    }
+    .btn-login:hover { background-color: #1e40af; }
+
+    .error-msg { color: var(--danger); font-size: 13px; margin-top: 10px; display: none; }
+
+    /* MAIN APP INTERFACE */
+    #appContent { display: none; }
+
+    nav {
+      background-color: var(--primary);
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      flex-wrap: wrap;
+    }
+
+    nav h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+
+    .nav-links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
+
+    .nav-links button {
+      background: none; border: 1px solid white; color: white;
+      padding: 7px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500;
+    }
+
+    .nav-links button.active, .nav-links button:hover {
+      background-color: white; color: var(--primary);
+    }
+
+    .btn-logout { background-color: var(--danger) !important; border-color: var(--danger) !important; }
+
+    .container {
+      max-width: 1100px; margin: 25px auto; background: white;
+      padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* DASHBOARD GRID */
+    .dashboard-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px; margin-top: 20px;
+    }
+
+    .card {
+      background: #f8fafc; padding: 20px; border-radius: 8px;
+      text-align: center; border-left: 5px solid var(--primary);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+
+    .card h3 { margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase; }
+    .card p { margin: 10px 0 0 0; font-size: 24px; font-weight: bold; color: var(--dark); }
+
+    /* TABLES & FORMS */
+    .form-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px; margin-bottom: 15px;
+    }
+
+    .btn { padding: 9px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; }
+    .btn-add { background-color: var(--accent); color: white; }
+    .btn-delete { background-color: var(--danger); color: white; }
+    .btn-present { background-color: var(--accent); color: white; margin-right: 5px; }
+    .btn-absent { background-color: var(--danger); color: white; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    table th, table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+    table th { background-color: var(--primary); color: white; }
+
+    .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+    .status-paid, .status-income { background: #dcfce7; color: #15803d; }
+    .status-pending, .status-expense { background: #fee2e2; color: #b91c1c; }
+
+    .settings-card {
+      background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;
+      border: 1px solid #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <h2 id="loginTitle">🏫 Clay Intl Sec</h2>
+      <p class="subtitle">School Management Portal</p>
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="username" placeholder="Enter username (clay / admin)" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="password" placeholder="Enter password" required>
+        </div>
+        <button type="submit" class="btn-login">Sign In</button>
+        <p id="loginError" class="error-msg">Invalid credentials!</p>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP INTERFACE -->
+  <div id="appContent">
+    <nav>
+      <h1 id="navTitle">🏫 Clay Intl Sec</h1>
+      <div class="nav-links">
+        <button onclick="showSection('dashboard', this)" class="active">Dashboard</button>
+        <button onclick="showSection('students', this)">Students</button>
+        <button onclick="showSection('teachers', this)">Teachers</button>
+        <button onclick="showSection('nonstaff', this)">Non-Staff</button>
+        <button onclick="showSection('bank', this)">School Bank</button>
+        <button onclick="showSection('fees', this)">Fees</button>
+        <button onclick="showSection('exams', this)">Examinations</button>
+        <button onclick="showSection('attendance', this)">Attendance</button>
+        <button onclick="showSection('settings', this)">Settings</button>
+        <button onclick="logout()" class="btn-logout">Logout</button>
+      </div>
+    </nav>
+
+    <div class="container">
+
+      <!-- 1. DASHBOARD SECTION -->
+      <div id="dashboard" class="section active">
+        <h2 id="dashHeader">Clay Intl Sec - Executive Dashboard</h2>
+        <div class="dashboard-grid">
+          <div class="card">
+            <h3>Total Students</h3>
+            <p id="dashStudents">0</p>
+          </div>
+          <div class="card" style="border-color: var(--accent);">
+            <h3>Teaching Staff</h3>
+            <p id="dashTeachers">0</p>
+          </div>
+          <div class="card" style="border-color: var(--warning);">
+            <h3>Non-Teaching Staff</h3>
+            <p id="dashNonStaff">0</p>
+          </div>
+          <div class="card" style="border-color: var(--light-blue);">
+            <h3>School Bank Balance</h3>
+            <p id="dashBankBalance">KSh 0</p>
+          </div>
+          <div class="card" style="border-color: var(--accent);">
+            <h3>Fee Revenue Paid</h3>
+            <p id="dashFeesPaid">KSh 0</p>
+          </div>
+          <div class="card" style="border-color: var(--danger);">
+            <h3>Pending Fees</h3>
+            <p id="dashFeesPending">KSh 0</p>
+          </div>
+          <div class="card" style="border-color: #8b5cf6;">
+            <h3>Exam Records</h3>
+            <p id="dashExamCount">0</p>
+          </div>
+          <div class="card" style="border-color: #0284c7;">
+            <h3>Attendance Rate</h3>
+            <p id="dashAttendanceRate">0%</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. STUDENTS SECTION -->
+      <div id="students" class="section">
+        <h2>Student Management</h2>
+        <form id="studentForm">
+          <div class="form-grid">
+            <div class="form-group"><label>Student ID</label><input type="text" id="stuId" placeholder="CIS-101" required></div>
+            <div class="form-group"><label>Full Name</label><input type="text" id="stuName" placeholder="John Doe" required></div>
+            <div class="form-group"><label>Class / Grade</label><input type="text" id="stuGrade" placeholder="Form 1" required></div>
+          </div>
+          <button type="submit" class="btn btn-add">Add Student</button>
+        </form>
+        <table>
+          <thead><tr><th>ID</th><th>Name</th><th>Grade</th><th>Action</th></tr></thead>
+          <tbody id="studentTable"></tbody>
+        </table>
+      </div>
+
+      <!-- 3. TEACHERS SECTION -->
+      <div id="teachers" class="section">
+        <h2>Teachers Management</h2>
+        <form id="teacherForm">
+          <div class="form-grid">
+            <div class="form-group"><label>Teacher ID</label><input type="text" id="teaId" placeholder="TCH-01" required></div>
+            <div class="form-group"><label>Name</label><input type="text" id="teaName" placeholder="Dr. Smith" required></div>
+            <div class="form-group"><label>Subject / Specialization</label><input type="text" id="teaSubject" placeholder="Mathematics" required></div>
+          </div>
+          <button type="submit" class="btn btn-add">Add Teacher</button>
+        </form>
+        <table>
+          <thead><tr><th>ID</th><th>Name</th><th>Subject</th><th>Action</th></tr></thead>
+          <tbody id="teacherTable"></tbody>
+        </table>
+      </div>
+
+      <!-- 4. NON-TEACHING STAFF SECTION -->
+      <div id="nonstaff" class="section">
+        <h2>Non-Teaching Staff</h2>
+        <form id="nonStaffForm">
+          <div class="form-grid">
+            <div class="form-group"><label>Staff ID</label><input type="text" id="staffId" placeholder="STF-01" required></div>
+            <div class="form-group"><label>Name</label><input type="text" id="staffName" placeholder="Mary W." required></div>
+            <div class="form-group"><label>Role / Department</label><input type="text" id="staffRole" placeholder="Accountant / Security" required></div>
+          </div>
+          <button type="submit" class="btn btn-add">Add Non-Staff Member</button>
+        </form>
+        <table>
+          <thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Action</th></tr></thead>
+          <tbody id="nonStaffTable"></tbody>
+        </table>
+      </div>
+
+      <!-- 5. SCHOOL BANK MONEY SECTION -->
+      <div id="bank" class="section">
+        <h2>School Bank Accounts & Ledger</h2>
+        <form id="bankForm">
+          <div class="form-grid">
+            <div class="form-group"><label>Transaction Description</label><input type="text" id="bankDesc" placeholder="Donation / Supplies / Salary" required></div>
+            <div class="form-group"><label>Amount (KSh)</label><input type="number" id="bankAmount" required></div>
+            <div class="form-group">
+              <label>Type</label>
+              <select id="bankType">
+                <option value="Deposit">Deposit (Income)</option>
+                <option value="Withdrawal">Withdrawal (Expense)</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-add">Record Bank Transaction</button>
+        </form>
+        <table>
+          <thead><tr><th>Description</th><th>Amount (KSh)</th><th>Type</th><th>Action</th></tr></thead>
+          <tbody id="bankTable"></tbody>
+        </table>
+      </div>
+
+      <!-- 6. FEES SECTION -->
+      <div id="fees" class="section">
+        <h2>Fee Tracking & Collection</h2>
+        <form id="feeForm">
+          <div class="form-grid">
+            <div class="form-group"><label>Select Student</label><select id="feeStudentSelect" required></select></div>
+            <div class="form-group"><label>Amount (KSh)</label><input type="number" id="feeAmount" required></div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="feeStatus">
+                <option value="Paid">Paid</option>
+                <option value="Pending">Pending</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-add">Record Fee</button>
+        </form>
+        <table>
+          <thead><tr><th>Student</th><th>Amount (KSh)</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="feeTable"></tbody>
+        </table>
+      </div>
+
+      <!-- 7. EXAMINATIONS SECTION -->
+      <div id="exams" class="section">
+        <h2>Examination Results & Marks</h2>
+        <form id="examForm">
+          <div class="form-grid">
+            <div class="form-group"><label>Select Student</label><select id="examStudentSelect" required></select></div>
+            <div class="form-group"><label>Subject</label><input type="text" id="examSubject" placeholder="Mathematics" required></div>
+            <div class="form-group"><label>Exam Type</label><input type="text" id="examType" placeholder="Mid-Term / End-Term" required></div>
+            <div class="form-group"><label>Score Obtained</label><input type="number" id="examScore" placeholder="85" required></div>
+            <div class="form-group"><label>Total Marks</label><input type="number" id="examTotal" placeholder="100" required></div>
+          </div>
+          <button type="submit" class="btn btn-add">Save Exam Result</button>
+        </form>
+        <table>
+          <thead><tr><th>Student</th><th>Subject</th><th>Exam Type</th><th>Score</th><th>Percentage</th><th>Action</th></tr></thead>
+          <tbody id="examTable"></tbody>
+        </table>
+      </div>
+
+      <!-- 8. ATTENDANCE SECTION -->
+      <div id="attendance" class="section">
+        <h2>Daily Attendance Tracker</h2>
+        <table>
+          <thead><tr><th>Student ID</th><th>Student Name</th><th>Status</th><th>Mark Attendance</th></tr></thead>
+          <tbody id="attendanceTable"></tbody>
+        </table>
+      </div>
+
+      <!-- 9. SETTINGS SECTION -->
+      <div id="settings" class="section">
+        <h2>System Settings</h2>
+        
+        <div class="settings-card">
+          <h3>School Identification</h3>
+          <form id="settingNameForm">
+            <div class="form-group">
+              <label>School Name</label>
+              <input type="text" id="settingSchoolName" required>
+            </div>
+            <button type="submit" class="btn btn-add">Save School Name</button>
+          </form>
+        </div>
+
+        <div class="settings-card">
+          <h3>Admin Password Configuration</h3>
+          <form id="settingPasswordForm">
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" id="settingNewPass" placeholder="Must include 1 uppercase & 1 symbol" required>
+            </div>
+            <button type="submit" class="btn btn-add">Update Password</button>
+          </form>
+        </div>
+
+        <div class="settings-card" style="border-color: var(--danger);">
+          <h3 style="color: var(--danger);">Database Reset</h3>
+          <p style="font-size: 13px; color: #666;">Clear current local storage database and restore default sample values.</p>
+          <button onclick="resetDatabase()" class="btn btn-delete">Reset All Data</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // System Configuration
+    let systemConfig = JSON.parse(localStorage.getItem('clay_db_config')) || {
+      schoolName: "Clay Intl Sec",
+      adminPass: "Clay2026!"
+    };
+
+    const VALID_USERS = ["clay", "admin"];
+
+    // Login Handler
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const user = document.getElementById('username').value.toLowerCase().trim();
+      const pass = document.getElementById('password').value;
+      const errorMsg = document.getElementById('loginError');
+
+      if (VALID_USERS.includes(user) && pass === systemConfig.adminPass) {
+        sessionStorage.setItem('clay_isLoggedIn', 'true');
+        errorMsg.style.display = 'none';
+        checkAuth();
+      } else {
+        errorMsg.style.display = 'block';
+      }
+    });
+
+    function checkAuth() {
+      applyConfigUI();
+      if (sessionStorage.getItem('clay_isLoggedIn') === 'true') {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appContent').style.display = 'block';
+        renderAll();
+      } else {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('appContent').style.display = 'none';
+      }
+    }
+
+    function logout() {
+      sessionStorage.removeItem('clay_isLoggedIn');
+      document.getElementById('loginForm').reset();
+      checkAuth();
+    }
+
+    // Default Data
+    let defaultStudents = [
+      { id: "CIS-101", name: "Alice Johnson", grade: "Form 1" },
+      { id: "CIS-102", name: "Brian Smith", grade: "Form 2" }
+    ];
+
+    let defaultTeachers = [
+      { id: "TCH-01", name: "Mr. Daniel Muthoka", subject: "Geography" }
+    ];
+
+    let defaultNonStaff = [
+      { id: "STF-01", name: "Sarah Connor", role: "School Accountant" }
+    ];
+
+    let defaultBank = [
+      { desc: "Government Grant", amount: 500000, type: "Deposit" },
+      { desc: "Textbook Purchase", amount: 120000, type: "Withdrawal" }
+    ];
+
+    let defaultFees = [
+      { studentName: "Alice Johnson", amount: 45000, status: "Paid" },
+      { studentName: "Brian Smith", amount: 45000, status: "Pending" }
+    ];
+
+    let defaultExams = [
+      { studentName: "Alice Johnson", subject: "Mathematics", type: "Mid-Term", score: 88, total: 100 },
+      { studentName: "Brian Smith", subject: "English", type: "Mid-Term", score: 74, total: 100 }
+    ];
+
+    let students = JSON.parse(localStorage.getItem('clay_db_students')) || defaultStudents;
+    let teachers = JSON.parse(localStorage.getItem('clay_db_teachers')) || defaultTeachers;
+    let nonStaff = JSON.parse(localStorage.getItem('clay_db_nonstaff')) || defaultNonStaff;
+    let bankLedger = JSON.parse(localStorage.getItem('clay_db_bank')) || defaultBank;
+    let fees = JSON.parse(localStorage.getItem('clay_db_fees')) || defaultFees;
+    let exams = JSON.parse(localStorage.getItem('clay_db_exams')) || defaultExams;
+    let attendance = JSON.parse(localStorage.getItem('clay_db_attendance')) || {};
+
+    // Navigation
+    function showSection(sectionId, btnElement) {
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+      document.querySelectorAll('.nav-links button').forEach(btn => {
+        if (!btn.classList.contains('btn-logout')) btn.classList.remove('active');
+      });
+      document.getElementById(sectionId).classList.add('active');
+      if (btnElement) btnElement.classList.add('active');
+      renderAll();
+    }
+
+    function saveAll() {
+      localStorage.setItem('clay_db_students', JSON.stringify(students));
+      localStorage.setItem('clay_db_teachers', JSON.stringify(teachers));
+      localStorage.setItem('clay_db_nonstaff', JSON.stringify(nonStaff));
+      localStorage.setItem('clay_db_bank', JSON.stringify(bankLedger));
+      localStorage.setItem('clay_db_fees', JSON.stringify(fees));
+      localStorage.setItem('clay_db_exams', JSON.stringify(exams));
+      localStorage.setItem('clay_db_attendance', JSON.stringify(attendance));
+      localStorage.setItem('clay_db_config', JSON.stringify(systemConfig));
+      updateDashboard();
+    }
+
+    function applyConfigUI() {
+      const name = systemConfig.schoolName;
+      document.getElementById('loginTitle').innerText = `🏫 ${name}`;
+      document.getElementById('navTitle').innerText = `🏫 ${name}`;
+      document.getElementById('dashHeader').innerText = `${name} - Executive Dashboard`;
+      document.getElementById('settingSchoolName').value = name;
+    }
+
+    // Settings Handlers
+    document.getElementById('settingNameForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      systemConfig.schoolName = document.getElementById('settingSchoolName').value;
+      saveAll();
+      applyConfigUI();
+      alert("School Name Updated!");
+    });
+
+    document.getElementById('settingPasswordForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const newPass = document.getElementById('settingNewPass').value;
+      const hasUpper = /[A-Z]/.test(newPass);
+      const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(newPass);
+
+      if (!hasUpper || !hasSymbol) {
+        alert("Password must contain at least one uppercase letter and one symbol!");
+        return;
+      }
+
+      systemConfig.adminPass = newPass;
+      saveAll();
+      this.reset();
+      alert("Password updated successfully!");
+    });
+
+    function resetDatabase() {
+      if (confirm("Are you sure you want to reset all records back to default values?")) {
+        students = [...defaultStudents];
+        teachers = [...defaultTeachers];
+        nonStaff = [...defaultNonStaff];
+        bankLedger = [...defaultBank];
+        fees = [...defaultFees];
+        exams = [...defaultExams];
+        attendance = {};
+        saveAll();
+        renderAll();
+        alert("Database reset successfully.");
+      }
+    }
+
+    // Form Submissions
+    document.getElementById('studentForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      students.push({
+        id: document.getElementById('stuId').value,
+        name: document.getElementById('stuName').value,
+        grade: document.getElementById('stuGrade').value
+      });
+      saveAll(); this.reset(); renderAll();
+    });
+
+    document.getElementById('teacherForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      teachers.push({
+        id: document.getElementById('teaId').value,
+        name: document.getElementById('teaName').value,
+        subject: document.getElementById('teaSubject').value
+      });
+      saveAll(); this.reset(); renderAll();
+    });
+
+    document.getElementById('nonStaffForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      nonStaff.push({
+        id: document.getElementById('staffId').value,
+        name: document.getElementById('staffName').value,
+        role: document.getElementById('staffRole').value
+      });
+      saveAll(); this.reset(); renderAll();
+    });
+
+    document.getElementById('bankForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      bankLedger.push({
+        desc: document.getElementById('bankDesc').value,
+        amount: parseFloat(document.getElementById('bankAmount').value),
+        type: document.getElementById('bankType').value
+      });
+      saveAll(); this.reset(); renderAll();
+    });
+
+    document.getElementById('feeForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      fees.push({
+        studentName: document.getElementById('feeStudentSelect').value,
+        amount: parseFloat(document.getElementById('feeAmount').value),
+        status: document.getElementById('feeStatus').value
+      });
+      saveAll(); this.reset(); renderAll();
+    });
+
+    document.getElementById('examForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      exams.push({
+        studentName: document.getElementById('examStudentSelect').value,
+        subject: document.getElementById('examSubject').value,
+        type: document.getElementById('examType').value,
+        score: parseFloat(document.getElementById('examScore').value),
+        total: parseFloat(document.getElementById('examTotal').value)
+      });
+      saveAll(); this.reset(); renderAll();
+    });
+
+    function markAttendance(studentId, status) {
+      attendance[studentId] = status;
+      saveAll(); renderAttendance();
+    }
+
+    function deleteItem(type, index) {
+      if (type === 'student') students.splice(index, 1);
+      if (type === 'teacher') teachers.splice(index, 1);
+      if (type === 'nonstaff') nonStaff.splice(index, 1);
+      if (type === 'bank') bankLedger.splice(index, 1);
+      if (type === 'fee') fees.splice(index, 1);
+      if (type === 'exam') exams.splice(index, 1);
+      saveAll(); renderAll();
+    }
+
+    function formatKSh(amount) {
+      return "KSh " + amount.toLocaleString('en-KE');
+    }
+
+    // Dashboard Calculations
+    function updateDashboard() {
+      document.getElementById('dashStudents').innerText = students.length;
+      document.getElementById('dashTeachers').innerText = teachers.length;
+      document.getElementById('dashNonStaff').innerText = nonStaff.length;
+
+      const deposits = bankLedger.filter(b => b.type === 'Deposit').reduce((a, b) => a + b.amount, 0);
+      const withdrawals = bankLedger.filter(b => b.type === 'Withdrawal').reduce((a, b) => a + b.amount, 0);
+      document.getElementById('dashBankBalance').innerText = formatKSh(deposits - withdrawals);
+
+      const paidFees = fees.filter(f => f.status === 'Paid').reduce((a, b) => a + b.amount, 0);
+      const pendingFees = fees.filter(f => f.status === 'Pending').reduce((a, b) => a + b.amount, 0);
+      document.getElementById('dashFeesPaid').innerText = formatKSh(paidFees);
+      document.getElementById('dashFeesPending').innerText = formatKSh(pendingFees);
+
+      document.getElementById('dashExamCount').innerText = exams.length;
+
+      const totalAtt = Object.keys(attendance).length;
+      const presentCount = Object.values(attendance).filter(v => v === 'Present').length;
+      const rate = totalAtt > 0 ? Math.round((presentCount / totalAtt) * 100) : 0;
+      document.getElementById('dashAttendanceRate').innerText = `${rate}%`;
+    }
+
+    // Render Table Data
+    function renderAll() {
+      renderStudents();
+      renderTeachers();
+      renderNonStaff();
+      renderBank();
+      renderFees();
+      renderExams();
+      renderAttendance();
+      updateDropdowns();
+      updateDashboard();
+    }
+
+    function renderStudents() {
+      document.getElementById('studentTable').innerHTML = students.map((s, i) => `
+        <tr><td>${s.id}</td><td>${s.name}</td><td>${s.grade}</td>
+        <td><button class="btn btn-delete" onclick="deleteItem('student', ${i})">Delete</button></td></tr>
+      `).join('');
+    }
+
+    function renderTeachers() {
+      document.getElementById('teacherTable').innerHTML = teachers.map((t, i) => `
+        <tr><td>${t.id}</td><td>${t.name}</td><td>${t.subject}</td>
+        <td><button class="btn btn-delete" onclick="deleteItem('teacher', ${i})">Delete</button></td></tr>
+      `).join('');
+    }
+
+    function renderNonStaff() {
+      document.getElementById('nonStaffTable').innerHTML = nonStaff.map((ns, i) => `
+        <tr><td>${ns.id}</td><td>${ns.name}</td><td>${ns.role}</td>
+        <td><button class="btn btn-delete" onclick="deleteItem('nonstaff', ${i})">Delete</button></td></tr>
+      `).join('');
+    }
+
+    function renderBank() {
+      document.getElementById('bankTable').innerHTML = bankLedger.map((b, i) => `
+        <tr><td>${b.desc}</td><td>${formatKSh(b.amount)}</td>
+        <td><span class="status-badge ${b.type === 'Deposit' ? 'status-income' : 'status-expense'}">${b.type}</span></td>
+        <td><button class="btn btn-delete" onclick="deleteItem('bank', ${i})">Delete</button></td></tr>
+      `).join('');
+    }
+
+    function renderFees() {
+      document.getElementById('feeTable').innerHTML = fees.map((f, i) => `
+        <tr><td>${f.studentName}</td><td>${formatKSh(f.amount)}</td>
+        <td><span class="status-badge ${f.status === 'Paid' ? 'status-paid' : 'status-pending'}">${f.status}</span></td>
+        <td><button class="btn btn-delete" onclick="deleteItem('fee', ${i})">Delete</button></td></tr>
+      `).join('');
+    }
+
+    function renderExams() {
+      document.getElementById('examTable').innerHTML = exams.map((ex, i) => {
+        const pct = ex.total > 0 ? Math.round((ex.score / ex.total) * 100) : 0;
+        return `
+          <tr>
+            <td>${ex.studentName}</td>
+            <td>${ex.subject}</td>
+            <td>${ex.type}</td>
+            <td>${ex.score} / ${ex.total}</td>
+            <td><b>${pct}%</b></td>
+            <td><button class="btn btn-delete" onclick="deleteItem('exam', ${i})">Delete</button></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderAttendance() {
+      document.getElementById('attendanceTable').innerHTML = students.map(s => `
+        <tr><td>${s.id}</td><td>${s.name}</td><td><b>${attendance[s.id] || 'Not Marked'}</b></td>
+        <td>
+          <button class="btn btn-present" onclick="markAttendance('${s.id}', 'Present')">Present</button>
+          <button class="btn btn-absent" onclick="markAttendance('${s.id}', 'Absent')">Absent</button>
+        </td></tr>
+      `).join('');
+    }
+
+    function updateDropdowns() {
+      const studentOptions = students.map(s => `
+        <option value="${s.name}">${s.name} (${s.id})</option>
+      `).join('');
+      document.getElementById('feeStudentSelect').innerHTML = studentOptions;
+      document.getElementById('examStudentSelect').innerHTML = studentOptions;
+    }
+
+    // Initialize App
+    saveAll();
+    checkAuth();
+  </script>
+
+</body>
+</html>
